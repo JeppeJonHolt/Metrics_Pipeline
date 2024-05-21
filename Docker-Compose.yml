@@ -1,0 +1,13 @@
+# $env:PROJECT_DIR = "${projectDir}"
+# docker-compose up --build
+services:
+  metrics:
+    image: jeppeholt/metrics
+    build: 
+      context: .
+      dockerfile: Dockerfile.metric
+    volumes:
+      - ${PROJECT_DIR}:C:/app
+      - C:\results:C:/results
+    environment:
+      - SOLUTION_NAME=${SOLUTION_NAME}

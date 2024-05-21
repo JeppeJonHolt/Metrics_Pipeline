@@ -35,5 +35,6 @@ RUN powershell -Command " \
 # Add the compiled Metrics.exe to the PATH
 ENV PATH="C:/roslyn-analyzers/artifacts/bin/Metrics/Release/net472;${PATH}"
 
-# Use a shell as the entrypoint
-ENTRYPOINT ["cmd.exe"]
+WORKDIR C:/results
+WORKDIR C:/app
+ENTRYPOINT ["cmd.exe", "/c", "metrics.exe /solution:%SOLUTION_NAME% /out:C:/results/report.xml && exit"]
