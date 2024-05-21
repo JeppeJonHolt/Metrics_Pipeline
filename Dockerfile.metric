@@ -1,0 +1,39 @@
+# Use the official .NET SDK image as the base image
+FROM jeppeholt/dotnet8-win:latest
+
+RUN powershell -Command " \
+    Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=874338' -OutFile 'C:/dotnet-framework-4.7.2-developer-pack.exe'; \
+    Start-Process 'C:/dotnet-framework-4.7.2-developer-pack.exe' -ArgumentList '/quiet /norestart' -Wait"
+
+RUN git clone https://github.com/dotnet/roslyn-analyzers.git C:/roslyn-analyzers
+
+# Set the working directory
+WORKDIR C:/roslyn-analyzers
+
+COPY global.json global.json
+
+RUN powershell -Command " \
+    Set-Location -Path 'C:/roslyn-analyzers'; \
+    try { \
+        ./Restore.cmd; \
+    } catch { \
+        Write-Host 'Restore.cmd failed, but continuing...'; \
+    } finally { exit 0 }"
+
+# Move to the Metrics tool directory
+WORKDIR C:/roslyn-analyzers/src/Tools/Metrics
+
+RUN powershell -Command " \
+    $ErrorActionPreference = 'Stop'; \
+    dotnet restore Metrics.csproj"
+
+# Compile the Metrics tool
+RUN powershell -Command " \
+    $ErrorActionPreference = 'Stop'; \
+    dotnet msbuild /m /v:m /p:Configuration=Release Metrics.csproj"
+
+# Add the compiled Metrics.exe to the PATH
+ENV PATH="C:/roslyn-analyzers/artifacts/bin/Metrics/Release/net472;${PATH}"
+
+# Use a shell as the entrypoint
+ENTRYPOINT ["cmd.exe"]
